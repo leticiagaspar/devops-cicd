@@ -32,8 +32,9 @@ jobs:
 
       # quality gate: send the code to SonarCloud for analysis (bugs, vulnerabilities, code smells, duplications)
       # the token is stored in GitHub secrets, never in plain text
+      # full plugin name is used because the sonar plugin is not declared in the pom.xml
       - name: SonarCloud analysis
-        run: mvn -B verify sonar:sonar -Dsonar.projectKey=leticiagaspar_devops-cicd -Dsonar.organization=leticiagaspar -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }} --file ./simple-api/pom.xml
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=leticiagaspar_devops-cicd -Dsonar.organization=leticiagaspar -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }} --file ./simple-api/pom.xml
 
   # define job to build and publish docker image
   build-and-push-docker-image:
