@@ -1,0 +1,16 @@
+---
+# Launch the PostgreSQL database from the Docker Hub image, with a volume to persist data
+- name: Launch database
+  community.docker.docker_container:
+    name: database
+    image: "{{ dockerhub_user }}/tp-devops-database:latest"
+    pull: always
+    env:
+      POSTGRES_PASSWORD: "{{ db_password }}"
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+    networks:
+      - name: app-network
+    restart_policy: unless-stopped
+  vars:
+    ansible_python_interpreter: /opt/docker_venv/bin/python3

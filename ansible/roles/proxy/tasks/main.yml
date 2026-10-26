@@ -1,0 +1,14 @@
+---
+# Launch the httpd reverse proxy, the only container exposed (port 80), forwarding to simple-api
+- name: Run HTTPD
+  community.docker.docker_container:
+    name: httpd
+    image: "{{ dockerhub_user }}/tp-devops-httpd:latest"
+    pull: always
+    ports:
+      - "80:80"
+    networks:
+      - name: app-network
+    restart_policy: unless-stopped
+  vars:
+    ansible_python_interpreter: /opt/docker_venv/bin/python3

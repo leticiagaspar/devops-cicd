@@ -1,0 +1,7 @@
+---
+# Create the docker network shared by database, app and proxy
+- name: Create docker network
+  community.docker.docker_network:
+    name: app-network
+  vars:
+    ansible_python_interpreter: /opt/docker_venv/bin/python3

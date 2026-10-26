@@ -1,0 +1,15 @@
+---
+# Launch the backend API; it reaches the database by its container name on the network
+- name: Launch app
+  community.docker.docker_container:
+    name: simple-api
+    image: "{{ dockerhub_user }}/tp-devops-simple-api:latest"
+    pull: always
+    env:
+      DATABASE_HOST: database
+      DATABASE_PASSWORD: "{{ db_password }}"
+    networks:
+      - name: app-network
+    restart_policy: unless-stopped
+  vars:
+    ansible_python_interpreter: /opt/docker_venv/bin/python3
