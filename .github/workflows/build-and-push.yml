@@ -49,6 +49,14 @@ jobs:
           tags: ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-httpd:latest
           push: true
 
+      # build and push the front image from ./front
+      - name: Build image and push front
+        uses: docker/build-push-action@v6
+        with:
+          context: ./front
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-front:latest
+          push: true
+
   # continuous deployment: run the Ansible playbook on the server once the new images are on Docker Hub
   deploy:
     needs: build-and-push-docker-image

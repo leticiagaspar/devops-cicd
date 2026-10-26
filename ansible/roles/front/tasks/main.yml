@@ -1,0 +1,12 @@
+---
+# Launch the front-end (Vue app served by nginx); httpd forwards "/" to this container
+- name: Launch front
+  community.docker.docker_container:
+    name: front
+    image: "{{ dockerhub_user }}/tp-devops-front:latest"
+    pull: always
+    networks:
+      - name: app-network
+    restart_policy: unless-stopped
+  vars:
+    ansible_python_interpreter: /opt/docker_venv/bin/python3
