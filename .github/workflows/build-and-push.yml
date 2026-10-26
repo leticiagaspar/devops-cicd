@@ -48,3 +48,33 @@ jobs:
           context: ./http-server
           tags: ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-httpd:latest
           push: true
+
+  # continuous deployment: run the Ansible playbook on the server once the new images are on Docker Hub
+  deploy:
+    needs: build-and-push-docker-image
+    runs-on: ubuntu-24.04
+
+    steps:
+      # checkout the exact commit that was tested and built
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # install Ansible (the full package includes the community.docker collection)
+      - name: Install Ansible
+        run: pip install ansible
+
+      # write the SSH private key from GitHub secrets to the path used in the inventory,
+      # and trust the server's host key
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/takima_key
+          chmod 400 ~/.ssh/takima_key
+          ssh-keyscan -H marialeticia.donascimentogaspar.takima.school >> ~/.ssh/known_hosts
+
+      # deploy: pull the latest images and recreate the containers that changed
+      - name: Deploy with Ansible
+        working-directory: ./ansible
+        run: ansible-playbook -i inventories/setup.yml playbook.yml
