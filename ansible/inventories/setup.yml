@@ -3,7 +3,7 @@ all:
     ansible_user: admin
     ansible_ssh_private_key_file: ~/.ssh/takima_key
     dockerhub_user: marialeticiagaspar
-    db_password: pwd
+    db_password: "{{ vault_db_password }}"
   children:
     prod:
       hosts:

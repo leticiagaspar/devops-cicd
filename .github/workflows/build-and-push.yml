@@ -57,7 +57,7 @@ jobs:
           tags: ${{secrets.DOCKERHUB_USERNAME}}/tp-devops-front:latest
           push: true
 
-  # continuous deployment: run the Ansible playbook on the server once the new images are on Docker Hub
+  # continuous deployment: run the Ansible playbook from a Docker image, with secrets encrypted by Ansible Vault
   deploy:
     needs: build-and-push-docker-image
     runs-on: ubuntu-24.04
@@ -69,20 +69,25 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      # install Ansible (the full package includes the community.docker collection)
-      - name: Install Ansible
-        run: pip install ansible
-
-      # write the SSH private key from GitHub secrets to the path used in the inventory,
-      # and trust the server's host key
-      - name: Set up SSH key
+      # write the SSH key and the vault password from GitHub secrets, and trust the server's host key
+      - name: Set up SSH key and vault password
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/takima_key
           chmod 400 ~/.ssh/takima_key
           ssh-keyscan -H marialeticia.donascimentogaspar.takima.school >> ~/.ssh/known_hosts
+          printf '%s' "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > "$RUNNER_TEMP/vault_pass"
 
-      # deploy: pull the latest images and recreate the containers that changed
-      - name: Deploy with Ansible
-        working-directory: ./ansible
-        run: ansible-playbook -i inventories/setup.yml playbook.yml
+      # build the image that provides Ansible
+      - name: Build Ansible image
+        run: docker build -t ansible-runner ./ansible
+
+      # deploy: run the playbook inside the Ansible container; the vault password decrypts the secrets
+      - name: Deploy with Ansible (Docker + Vault)
+        run: |
+          docker run --rm \
+            -v "$PWD/ansible:/ansible" \
+            -v "$HOME/.ssh:/root/.ssh:ro" \
+            -v "$RUNNER_TEMP/vault_pass:/vault_pass:ro" \
+            ansible-runner \
+            ansible-playbook -i inventories/setup.yml playbook.yml --vault-password-file /vault_pass
